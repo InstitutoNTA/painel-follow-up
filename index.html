@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Painel de Follow-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+[hidden]{display:none!important} html,body{margin:0}
+/* Layout: painel operacional, sempre claro; coluna principal + coluna lateral nas telas de aluno */
+:root{
+  color-scheme: light;
+  --bg:#FFFFFF; --card:#FFFFFF; --line:#D9D9D4; --line-soft:#ECECE8; --fill:#F7F7F4;
+  --ink:#1B1B1B; --muted:#555555; --faint:#7A7A75;
+  --accent:#1F4FB8; --accent-ink:#FFFFFF; --accent-soft:#E9EFFC; --accent-hover:#1A43A0;
+  --ok:#1D6B40; --ok-bg:#E5F3EA; --ok-line:#B9DEC6;
+  --info:#1C559C; --info-bg:#E5EFFB; --info-line:#BCD3F0;
+  --warn:#7E5200; --warn-bg:#FFF2D4; --warn-line:#F0D592;
+  --bad:#9C2F28; --bad-bg:#FCEAE7; --bad-line:#F1C3BC;
+  --font:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r:9px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.25}
+h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:600}
+h3{font-size:14px;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.sub{color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Botões */
+.btn{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--fill)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--accent);padding:0 8px}
+.btn-ghost:hover{background:var(--accent-soft)}
+.btn-ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.btn-ok:hover{background:var(--ok-bg)}
+.btn-danger{color:var(--bad);border-color:var(--bad-line);width:100%}
+.btn-danger:hover{background:var(--bad-bg)}
+.btn-danger.armed{background:var(--bad);color:#FFFFFF;border-color:var(--bad)}
+
+/* Cabeçalho */
+.page-head{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end}
+.page-head .titles{display:flex;flex-direction:column;gap:4px;min-width:0}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap}
+.topbar{display:flex}
+
+/* Avisos */
+.notice{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--fill)}
+.notice p{min-width:0;flex:1 1 280px}
+.notice.info{background:var(--info-bg);border-color:var(--info-line);color:var(--info)}
+.notice.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.notice.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.notice.bad{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad)}
+.notice strong{font-weight:600}
+.progress{height:6px;border-radius:3px;background:rgba(28,85,156,.15);flex:1 1 100%;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--info);transition:width .3s}
+
+/* Quadros de resumo */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 14px;text-align:left;cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;min-height:96px;justify-content:space-between}
+.stat:hover{border-color:var(--faint)}
+.stat .lbl{font-size:13px;color:var(--muted);line-height:1.3}
+.stat .val{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.stat.warn{background:var(--warn-bg);border-color:var(--warn-line)} .stat.warn .val{color:var(--warn)}
+.stat.info{background:var(--info-bg);border-color:var(--info-line)} .stat.info .val{color:var(--info)}
+.stat.ok{background:var(--ok-bg);border-color:var(--ok-line)} .stat.ok .val{color:var(--ok)}
+.stat.sel{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+/* Filtros */
+.pos-filter{display:flex;gap:8px;flex-wrap:wrap}
+.chipbtn{min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chipbtn .c{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;background:var(--fill);border-radius:10px;padding:1px 8px}
+.chipbtn.sel{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+.chipbtn.sel .c{background:rgba(255,255,255,.2);color:#FFFFFF}
+.filters{display:grid;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(160px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>span,.field>label{font-size:13px;font-weight:500;color:var(--muted)}
+input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],input[type=url],input[type=search],select,textarea{
+  min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:9px 12px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:88px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+/* Tabela */
+.table-wrap{border:1px solid var(--line);border-radius:var(--r);overflow-x:auto;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:10px 14px;background:var(--fill);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#FAFAF8}
+tbody tr:last-child td{border-bottom:0}
+.nome{font-weight:600}
+.dias{font-weight:600;font-variant-numeric:tabular-nums}
+.dias.vencido{color:var(--bad)}
+.empty{padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* Etiquetas */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--fill);color:var(--muted);white-space:nowrap}
+.tag.acolhedor,.tag.enviada,.tag.resolvido{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.tag.lembrete,.tag.pronta{background:var(--info-bg);border-color:var(--info-line);color:var(--info)}
+.tag.firme,.tag.vencendo{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.tag.urgente,.tag.vencido{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad)}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.foot{font-size:13px;color:var(--muted);max-width:70ch}
+
+/* Telas com coluna lateral */
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card-main{border:2px solid var(--accent)}
+.sticky{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 12px)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pend-row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.pend-row:last-of-type{border-bottom:0}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:500}
+.chk input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.dias-in{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.dias-in input{width:84px}
+.hint{font-size:13px;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg label{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.seg input{accent-color:var(--accent)}
+.seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.resumo dl{margin:0;display:flex;flex-direction:column;gap:12px}
+dl.kv{margin:0;display:flex;flex-direction:column;gap:10px}
+.kv div{display:flex;flex-direction:column;gap:2px}
+.kv dt{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.kv dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+
+/* Aluno */
+.aluno-head{display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:flex-start}
+.aluno-head .info{display:flex;flex-direction:column;gap:6px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.tones{display:flex;flex-wrap:wrap;gap:8px}
+.tone{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500}
+.tone.sel.acolhedor{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.tone.sel.lembrete{background:var(--info-bg);border-color:var(--info);color:var(--info)}
+.tone.sel.firme{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.tone.sel.urgente{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.main-head{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline}
+details.instr summary{cursor:pointer;color:var(--accent);font-weight:500;min-height:32px;display:flex;align-items:center}
+details.instr textarea{margin-top:8px}
+.msgbox{white-space:pre-wrap;background:var(--fill);border:1px solid var(--line);border-radius:8px;padding:16px;min-height:140px;overflow-wrap:anywhere;line-height:1.6}
+.msgbox.placeholder{color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center}
+.msgbox.writing{border-color:var(--info-line);background:var(--info-bg)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.list li{border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px;background:var(--fill)}
+.list .when{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:4px}
+.list .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.hist{display:flex;flex-direction:column;gap:8px}
+.hist details{border:1px solid var(--line-soft);border-radius:8px;background:var(--card)}
+.hist summary{cursor:pointer;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;min-height:44px}
+.hist .body{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+.hist .body .txt{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--fill);border-radius:6px;padding:10px 12px}
+.side-pend{display:flex;flex-direction:column;gap:6px}
+.side-pend .item{border-bottom:1px solid var(--line-soft);padding-bottom:8px}
+.side-pend .item:last-child{border-bottom:0;padding-bottom:0}
+.side-pend .det{font-size:13px;color:var(--muted);padding-left:30px}
+.side-pend .det.vencido{color:var(--bad);font-weight:500}
+.side-pend .det.ok{color:var(--ok)}
+.done-box{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.done-box h2{color:var(--ok)}
+
+/* Toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:#FFFFFF;padding:10px 16px;border-radius:8px;font-size:14px;max-width:calc(100% - 32px);z-index:10;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+
+@media (max-width:900px){
+  .two-col{grid-template-columns:minmax(0,1fr)}
+  .sticky{position:static}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filters .field:first-child{grid-column:1/-1}
+}
+@media (max-width:560px){
+  h1{font-size:22px}
+  .grid2,.filters{grid-template-columns:minmax(0,1fr)}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .head-actions{width:100%} .head-actions .btn{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <p class="muted" style="padding:40px 0">Carregando o painel…</p>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- Constantes ---------- */
+const POS = [
+  {nome:"Engenharia de Dados e Inteligência Artificial", curto:"Eng. de Dados e IA"},
+  {nome:"Inteligência Artificial aplicada a Negócios", curto:"IA aplicada a Negócios"},
+  {nome:"Arquitetura Avançada em Cloud com Azure", curto:"Cloud com Azure"},
+  {nome:"MBA aplicado ao Direito", curto:"MBA aplicado ao Direito"},
+  {nome:"Defesa Cibernética", curto:"Defesa Cibernética"}
+];
+const PEND = [
+  {k:"acesso", label:"Nunca acessou a plataforma", curto:"Nunca acessou", acao:"acessar a plataforma pela primeira vez", link:"linkAcesso"},
+  {k:"contrato", label:"Não assinou o contrato", curto:"Não assinou contrato", acao:"assinar o contrato", link:"linkContrato"},
+  {k:"documentacao", label:"Não subiu a documentação", curto:"Sem documentação", acao:"subir a documentação", link:"linkDocumentacao"}
+];
+const TONS = ["Acolhedor","Lembrete","Firme","Urgente"];
+const CFG_PADRAO = {assinante:"", prazo:7, linkAcesso:"", linkContrato:"", linkDocumentacao:""};
+const LS_KEY = "painel-follow-up-v1";
+
+/* ---------- Estado ---------- */
+let alunos = {};
+let cfg = {...CFG_PADRAO};
+let carregado = false;
+let sampleFn;            // undefined = verificando; null = indisponível
+let samplingOff = "";    // motivo, quando o Claude não pode ser usado nesta visualização
+let downloadsNs = null;
+const gerando = {};      // id -> {text, ctl}
+let lote = {ativo:false, feitos:0, total:0};
+let autoDia = "";
+const ui = {
+  tela:"painel", alunoId:null, editId:null,
+  f:{busca:"", situacao:"", msg:"", mostrar:"ativos", pos:""},
+  tomSel:{}
+};
+
+/* ---------- Utilidades ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const hoje = () => { const d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+function diff(a,b){ const [y1,m1,d1]=a.split("-").map(Number), [y2,m2,d2]=b.split("-").map(Number);
+  return Math.round((Date.UTC(y2,m2-1,d2)-Date.UTC(y1,m1-1,d1))/864e5); }
+const fmtBR = s => { if(!s) return ""; const [y,m,d]=s.split("-"); return d+"/"+m+"/"+y; };
+const fmtDM = s => { if(!s) return ""; const [,m,d]=s.split("-"); return d+"/"+m; };
+const diaUtil = () => { const g=new Date().getDay(); return g>=1 && g<=5; };
+const depoisDas9 = () => new Date().getHours() >= 9;
+const clone = o => { try { return structuredClone(o); } catch { return JSON.parse(JSON.stringify(o)); } };
+const prazo = () => Math.max(1, Number(cfg.prazo) || 7);
+const plural = (n, s, p) => n + " " + (n===1 ? s : p);
+const posInfo = nome => POS.find(p => p.nome === nome);
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, 3800); }
+
+/* ---------- Regras de negócio ---------- */
+function diasPend(a, k){
+  const p = a.pendencias?.[k]; if(!p?.ativa) return null;
+  const ref = p.resolvidaEm || hoje();
+  if(p.diasInformados != null && p.informadoEm) return p.diasInformados + Math.max(0, diff(p.informadoEm, ref));
+  if(a.dataCompra) return Math.max(0, diff(a.dataCompra, ref));
+  return Math.max(0, diff(a.criadoEm || hoje(), ref));
+}
+const marcadas = a => PEND.filter(p => a.pendencias?.[p.k]?.ativa);
+const abertas = a => marcadas(a).filter(p => !a.pendencias[p.k].resolvidaEm);
+const concluido = a => marcadas(a).length > 0 && abertas(a).length === 0;
+const ativo = a => !concluido(a);
+const comPend = a => abertas(a).length > 0;
+const diasAberto = a => abertas(a).reduce((m,p) => Math.max(m, diasPend(a,p.k)||0), 0);
+const msgs = a => a.mensagens || [];
+const msgHoje = a => msgs(a).find(m => m.data === hoje());
+const msgsAntes = a => msgs(a).filter(m => m.data !== hoje());
+function tomSugerido(a){
+  if(msgsAntes(a).length === 0) return "Acolhedor";
+  const D = diasAberto(a), P = prazo();
+  if(D < P/2) return "Acolhedor";
+  if(D < P) return "Lembrete";
+  if(D <= P + 7) return "Firme";
+  return "Urgente";
+}
+const vencendo = a => ativo(a) && comPend(a) && diasAberto(a) >= prazo() - 1;
+const precisaGerarHoje = a => diaUtil() && ativo(a) && comPend(a) && !msgHoje(a);
+const pendenteHoje = a => diaUtil() && ativo(a) && comPend(a) && (!msgHoje(a) || !msgHoje(a).enviada);
+function situacaoPrazo(a){
+  const D = diasAberto(a), P = prazo();
+  if(D > P) return {txt:"prazo vencido", cls:"vencido"};
+  if(D === P) return {txt:"vence hoje", cls:"vencendo"};
+  if(D >= P - 1) return {txt:"falta 1 dia", cls:"vencendo"};
+  return {txt:"faltam " + (P - D) + " dias", cls:""};
+}
+function perfilTxt(v){ return v === "transicao" ? "Transição de carreira" : v === "especializacao" ? "Especialização" : ""; }
+function timeNome(pos){
+  if(!pos) return "Sucesso do Aluno da Pós-graduação";
+  if(pos === "MBA aplicado ao Direito") return "Sucesso do Aluno do MBA aplicado ao Direito";
+  return "Sucesso do Aluno da Pós-graduação em " + pos;
+}
+
+/* ---------- Armazenamento ---------- */
+const filas = {};
+function enfileirar(chave, fn){ const p=(filas[chave]||Promise.resolve()).catch(()=>{}).then(fn); filas[chave]=p; return p; }
+function erroDb(e){
+  if(e?.code === "quota_exceeded") return "O espaço de armazenamento do painel está cheio. Exclua alunos concluídos para liberar espaço.";
+  if(e?.code === "invalid_argument") return "Você não tem permissão para alterar os dados deste painel.";
+  return "Não foi possível salvar agora. Verifique a conexão e tente de novo.";
+}
+const Store = {
+  modo:null, db:null,
+  async init(){
+    let db = null;
+    try { db = window.claude?.use ? await window.claude.use("db") : null; } catch { db = null; }
+    if(db){
+      this.modo = "db"; this.db = db;
+      let okA=false, okC=false;
+      db.collection("alunos").onSnapshot(snap => {
+        const m = {};
+        snap.docs.forEach(d => { if(d.exists) m[d.id] = {...clone(d.data()), id:d.id}; });
+        alunos = m; okA = true; if(okC) carregado = true; aoMudarDados();
+      }, () => toast("A lista de alunos parou de atualizar. Recarregue a página."));
+      db.doc("config/geral").onSnapshot(s => {
+        cfg = {...CFG_PADRAO, ...(s.exists ? clone(s.data()) : {})};
+        okC = true; if(okA) carregado = true; aoMudarDados();
+      }, () => {});
+    } else {
+      this.modo = "local";
+      try { const raw = localStorage.getItem(LS_KEY); if(raw){ const d=JSON.parse(raw); alunos=d.alunos||{}; cfg={...CFG_PADRAO, ...(d.cfg||{})}; } } catch {}
+      carregado = true; aoMudarDados();
+    }
+  },
+  persistLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify({alunos, cfg})); } catch { toast("Não foi possível salvar neste navegador. Exporte um backup."); } },
+  novoId(){ return this.modo==="db" ? this.db.collection("alunos").doc().id : "a" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); },
+  salvarAluno(a){
+    alunos[a.id] = a; aoMudarDados();
+    if(this.modo === "db"){
+      const {id, ...corpo} = a;
+      return enfileirar(a.id, () => this.db.doc("alunos/" + id).set(corpo)).catch(e => toast(erroDb(e)));
+    }
+    this.persistLocal(); return Promise.resolve();
+  },
+  excluirAluno(id){
+    delete alunos[id]; aoMudarDados();
+    if(this.modo === "db") return enfileirar(id, () => this.db.doc("alunos/" + id).delete()).catch(e => toast(erroDb(e)));
+    this.persistLocal(); return Promise.resolve();
+  },
+  salvarCfg(c){
+    cfg = c; aoMudarDados();
+    if(this.modo === "db") return enfileirar("cfg", () => this.db.doc("config/geral").set(c)).catch(e => toast(erroDb(e)));
+    this.persistLocal(); return Promise.resolve();
+  }
+};
+
+/* ---------- Agente: prompt e geração ---------- */
+function montarPrompt(a, tom, instrucao){
+  const P = prazo(), D = diasAberto(a), antes = msgsAntes(a);
+  const primeiro = antes.length === 0;
+  const enviadas = antes.filter(m => m.enviada).length;
+  const ultimas = antes.slice(-2);
+  const resps = (a.respostas || []).slice(-2);
+  const sit = situacaoPrazo(a);
+  const pends = abertas(a).map(p => {
+    const link = cfg[p.link];
+    return "- " + p.label + " (precisa " + p.acao + "), pendente há " + diasPend(a,p.k) + " dias. " +
+      (link ? "Link do passo a passo: " + link : "Sem link configurado: diga que vai enviar o passo a passo em seguida.");
+  }).join("\n") || "- Nenhuma pendência em aberto informada.";
+  const guia = {
+    Acolhedor:"caloroso e empático; mostre que estamos ali para ajudar e que ele é prioridade; convide a dar o próximo passo com leveza.",
+    Lembrete:"amigável e prático; lembre a pendência e quantos dias ela tem, reforce o benefício para o objetivo dele e peça uma ação simples ainda hoje, oferecendo ajuda.",
+    Firme:"mais direto; deixe claro o prazo e o que ele perde para o objetivo dele se continuar parado, peça que resolva hoje, sempre oferecendo ajuda concreta e mostrando que queremos o sucesso dele.",
+    Urgente:"senso de urgência alto e respeitoso; diga que precisa falar com ele hoje, explique o impacto no curso e no certificado e reforce que o time está pronto para resolver junto com ele agora."
+  }[tom];
+  return [
+"Você escreve mensagens de follow-up para WhatsApp em nome do time de Sucesso do Aluno de uma pós-graduação. Escreva UMA mensagem para o aluno abaixo.",
+"",
+"REGRAS",
+"- Português do Brasil, tom humano, como uma pessoa real escrevendo no WhatsApp. Até cerca de 130 palavras, em 2 a 4 parágrafos curtos. Sem markdown, sem hashtags, no máximo 1 emoji.",
+"- Sempre deixe claro que queremos ajudar, que o aluno é prioridade e que vamos apoiar até ele conquistar o objetivo dele. Isso vale para todos os tons.",
+"- Conecte a mensagem com a dor principal e o momento de carreira (transição ou especialização), quando informados.",
+"- Cite há quantos dias a pendência está em aberto e diga claramente o que ele precisa fazer.",
+"- Use as observações da equipe (por exemplo, benefício ou acesso extra ao resolver a pendência).",
+"- Leve em conta a resposta anterior do aluno, se houver.",
+"- Nunca seja agressivo, nunca constranja, ameace ou culpe o aluno.",
+"- Não invente dados, links, prazos ou benefícios. Se algo não foi informado, não mencione. Sem link, diga que vai enviar o passo a passo em seguida.",
+"- Não repita frases das mensagens anteriores; varie a abordagem.",
+"- Nunca cite o nome da empresa ou instituição. O time se apresenta como \"" + timeNome(a.pos) + "\"" + (a.pos === "MBA aplicado ao Direito" ? " (ou só \"do MBA\" quando soar mais natural)" : "") + ".",
+primeiro
+  ? "- Este é o PRIMEIRO CONTATO: " + (cfg.assinante ? "apresente-se como " + cfg.assinante + ", diga" : "diga (sem inventar um nome para quem escreve)") + " que faz parte do time e que vai acompanhar o aluno por ali."
+  : "- Não é o primeiro contato: não precisa se apresentar de novo.",
+"- Se houver instrução da equipe, siga-a com prioridade, dentro destas regras.",
+"",
+"TOM ESCOLHIDO: " + tom + " — " + guia,
+"",
+"DADOS DO ALUNO",
+"- Nome: " + (a.nome || "não informado (cumprimente sem usar nome)"),
+"- Pós-graduação: " + (a.pos || "não informada"),
+"- Momento de carreira: " + (perfilTxt(a.perfil) || "não informado"),
+"- Dor principal: " + (a.dor || "não informada"),
+"- Observações da equipe: " + (a.observacoes || "nenhuma"),
+"- Pendências em aberto:",
+pends,
+"- Dias em aberto (maior pendência): " + D + ". Prazo combinado: " + P + " dias. Situação: " + sit.txt + ".",
+"- Mensagens já enviadas antes de hoje: " + enviadas + " (geradas: " + antes.length + ").",
+"",
+"ÚLTIMAS MENSAGENS (não repita frases):",
+ultimas.length ? ultimas.map(m => "[" + fmtBR(m.data) + ", tom " + m.tom + "]\n" + m.texto).join("\n\n") : "nenhuma",
+"",
+"ÚLTIMAS RESPOSTAS DO ALUNO:",
+resps.length ? resps.map(r => "[" + fmtBR(r.data) + "] " + r.texto).join("\n") : "nenhuma",
+"",
+"INSTRUÇÃO DA EQUIPE PARA ESTA MENSAGEM: " + (instrucao ? instrucao : "nenhuma"),
+"",
+"Responda somente com o texto da mensagem, pronto para colar no WhatsApp, sem aspas e sem comentários."
+  ].join("\n");
+}
+function limpar(t){ return String(t).trim().replace(/^["“]|["”]$/g, "").replace(/\*\*(.+?)\*\*/g, "$1").trim(); }
+
+const FATAIS = ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"];
+async function gerar(id, {tom, instrucao=""} = {}){
+  if(!sampleFn || samplingOff || gerando[id]) return "skip";
+  const a = alunos[id]; if(!a) return "skip";
+  tom = tom || tomSugerido(a);
+  const ctl = new AbortController();
+  gerando[id] = {text:"", ctl};
+  atualizarTela();
+  let status = "ok";
+  try {
+    const {text} = await sampleFn(montarPrompt(a, tom, instrucao), {
+      cache:false, signal:ctl.signal,
+      onText: ({text}) => { if(gerando[id]){ gerando[id].text = text; atualizarStreaming(id); } }
+    });
+    const atual = alunos[id];
+    if(atual){
+      const lista = clone(msgs(atual));
+      const i = lista.findIndex(m => m.data === hoje());
+      const ultimoDia = lista.filter(m => m.data !== hoje()).reduce((m,x) => Math.max(m, x.dia||0), 0);
+      const nova = {data:hoje(), dia: i >= 0 ? lista[i].dia : ultimoDia + 1, tom, texto:limpar(text), enviada:false, instrucao, geradaEm:new Date().toISOString()};
+      if(i >= 0) lista[i] = nova; else lista.push(nova);
+      delete gerando[id];
+      ui.tomSel[id] = tom;
+      await Store.salvarAluno({...atual, mensagens:lista});
+    }
+  } catch(e) {
+    const code = e?.code;
+    if(code === "cancelled"){ status = "cancel"; }
+    else if(FATAIS.includes(code)){ samplingOff = "A escrita de mensagens pelo Claude não foi liberada nesta visualização. Para usar, permita o acesso ao Claude no menu de permissões do painel e recarregue a página."; status = "stop"; }
+    else if(code === "rate_limited"){ toast("Muitas mensagens em pouco tempo. Aguarde alguns minutos e tente de novo."); status = "stop"; }
+    else if(code === "session_expired"){ toast("Sua sessão expirou. Entre de novo no Claude e recarregue a página."); status = "stop"; }
+    else if(code === "refused"){ toast("O Claude não escreveu esta mensagem. Ajuste as observações ou a instrução e tente de novo."); status = "erro"; }
+    else { toast("A mensagem não foi concluída. Clique em gerar de novo."); status = "erro"; }
+  } finally {
+    delete gerando[id];
+    atualizarTela();
+  }
+  return status;
+}
+
+async function gerarLote(){
+  if(lote.ativo || !sampleFn || samplingOff) return;
+  const ids = Object.values(alunos).filter(precisaGerarHoje).sort((x,y) => diasAberto(y) - diasAberto(x)).map(a => a.id);
+  if(!ids.length) return;
+  lote = {ativo:true, feitos:0, total:ids.length};
+  atualizarTela();
+  let idx = 0, parar = false;
+  const worker = async () => {
+    while(!parar && idx < ids.length){
+      const id = ids[idx++];
+      const a = alunos[id];
+      if(a && precisaGerarHoje(a) && !gerando[id]){
+        const r = await gerar(id, {tom:tomSugerido(a)});
+        if(r === "stop") parar = true;
+      }
+      lote.feitos++; renderBanner();
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  lote.ativo = false;
+  atualizarTela();
+}
+
+function checarAuto(){
+  if(!carregado || !sampleFn || samplingOff) return;
+  if(!diaUtil() || !depoisDas9() || autoDia === hoje()) return;
+  autoDia = hoje();
+  gerarLote();
+}
+
+/* ---------- Renderização geral ---------- */
+function aoMudarDados(){ atualizarTela(); checarAuto(); }
+function atualizarTela(){
+  if(!carregado) return;
+  if(ui.tela === "painel"){ if(!$("#p-table")) renderPainel(); else renderPainelPartes(); }
+  else if(ui.tela === "aluno"){
+    if(!alunos[ui.alunoId]){ irPara("painel"); return; }
+    if(!$("#a-head")) renderAluno(); else renderAlunoPartes();
+  }
+  else if(ui.tela === "form"){ if(!$("#f-aluno")) renderForm(); else atualizarResumo(); }
+  else if(ui.tela === "config"){ if(!$("#f-cfg")) renderConfig(); }
+}
+function irPara(tela, opts={}){
+  ui.tela = tela; Object.assign(ui, opts);
+  $("#app").innerHTML = "";
+  window.scrollTo(0,0);
+  atualizarTela();
+}
+
+/* ---------- Painel do dia ---------- */
+function renderPainel(){
+  const dataExt = new Intl.DateTimeFormat("pt-BR", {weekday:"long", day:"numeric", month:"long", year:"numeric"}).format(new Date());
+  $("#app").innerHTML = `
+  <header class="page-head">
+    <div class="titles">
+      <p class="eyebrow">Sucesso do Aluno · Pós-graduação</p>
+      <h1>Acompanhamento de alunos</h1>
+      <p class="sub">${esc(dataExt.charAt(0).toUpperCase() + dataExt.slice(1))} · mensagens prontas às 9h, de segunda a sexta</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" data-act="config">Configurações</button>
+      <button class="btn btn-primary" data-act="novo">+ Cadastrar aluno</button>
+    </div>
+  </header>
+  <div id="p-avisos" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="p-banner"></div>
+  <div id="p-cards" class="cards"></div>
+  <div id="p-pos" class="pos-filter"></div>
+  <div class="filters" id="p-filters">
+    <div class="field"><label for="f-busca">Buscar</label><input type="search" id="f-busca" placeholder="Nome, e-mail ou telefone" value="${esc(ui.f.busca)}"></div>
+    <div class="field"><label for="f-sit">Situação</label>
+      <select id="f-sit"><option value="">Todas</option><option value="acesso">Nunca acessou</option><option value="contrato">Não assinou contrato</option><option value="documentacao">Sem documentação</option><option value="vencendo">Vencendo ou vencido</option></select></div>
+    <div class="field"><label for="f-msg">Mensagem de hoje</label>
+      <select id="f-msg"><option value="">Todas</option><option value="pronta">Pronta para enviar</option><option value="enviada">Enviada</option><option value="gerar">A gerar</option><option value="pendentes">Pendentes hoje</option></select></div>
+    <div class="field"><label for="f-most">Mostrar</label>
+      <select id="f-most"><option value="ativos">Em acompanhamento</option><option value="resolvidas">Pendências resolvidas</option></select></div>
+  </div>
+  <div class="table-wrap" id="p-table"></div>
+  <p class="foot">O aluno sai do acompanhamento quando todas as pendências dele são marcadas como resolvidas. Se ele só responder, continua recebendo mensagens.</p>`;
+  $("#f-busca").addEventListener("input", e => { ui.f.busca = e.target.value; renderTabela(); });
+  $("#f-sit").addEventListener("change", e => { ui.f.situacao = e.target.value; renderPainelPartes(); });
+  $("#f-msg").addEventListener("change", e => { ui.f.msg = e.target.value; renderPainelPartes(); });
+  $("#f-most").addEventListener("change", e => { ui.f.mostrar = e.target.value; renderPainelPartes(); });
+  renderPainelPartes();
+}
+function renderPainelPartes(){
+  if(!$("#p-table")) return;
+  $("#f-sit").value = ui.f.situacao; $("#f-msg").value = ui.f.msg; $("#f-most").value = ui.f.mostrar;
+  renderAvisos(); renderBanner(); renderCards(); renderPosFiltro(); renderTabela();
+  const vazio = Object.keys(alunos).length === 0;
+  ["#p-cards","#p-pos","#p-filters"].forEach(s => $(s).hidden = vazio);
+}
+function renderAvisos(){
+  const el = $("#p-avisos"); if(!el) return;
+  const partes = [];
+  if(!cfg.assinante) partes.push(`<div class="notice warn"><p><strong>Falta o nome de quem assina as mensagens.</strong> Ele aparece no primeiro contato com cada aluno.</p><button class="btn" data-act="config">Abrir Configurações</button></div>`);
+  if(sampleFn === null) partes.push(`<div class="notice bad"><p><strong>A escrita de mensagens não está disponível aqui.</strong> Abra este painel pelo Claude (claude.ai ou app) para o agente escrever as mensagens. O cadastro e o acompanhamento continuam funcionando.</p></div>`);
+  else if(samplingOff) partes.push(`<div class="notice bad"><p><strong>O agente não pode escrever mensagens nesta visualização.</strong> ${esc(samplingOff)}</p></div>`);
+  if(Store.modo === "local") partes.push(`<div class="notice"><p>Os dados ficam salvos só neste navegador. Exporte um backup em Configurações de vez em quando.</p><button class="btn" data-act="config">Configurações</button></div>`);
+  el.innerHTML = partes.join("");
+}
+function renderBanner(){
+  const el = $("#p-banner"); if(!el) return;
+  if(Object.keys(alunos).length === 0){ el.innerHTML = ""; return; }
+  const semMsg = Object.values(alunos).filter(precisaGerarHoje).length;
+  const podeGerar = sampleFn && !samplingOff;
+  if(lote.ativo){
+    const pct = lote.total ? Math.round(lote.feitos / lote.total * 100) : 0;
+    el.innerHTML = `<div class="notice info"><p><strong>Preparando as mensagens de hoje: ${lote.feitos} de ${lote.total}</strong></p><div class="progress" aria-hidden="true"><span style="width:${pct}%"></span></div></div>`;
+  } else if(!diaUtil()){
+    el.innerHTML = `<div class="notice"><p>Hoje não é dia útil. As mensagens automáticas voltam na segunda-feira, às 9h.</p></div>`;
+  } else if(!depoisDas9() && semMsg > 0){
+    el.innerHTML = `<div class="notice info"><p>As mensagens de hoje ficam prontas a partir das 9h.</p>${podeGerar ? `<button class="btn btn-primary" data-act="gerar-lote">Gerar agora</button>` : ""}</div>`;
+  } else if(semMsg > 0){
+    el.innerHTML = `<div class="notice warn"><p><strong>${plural(semMsg, "aluno ainda está", "alunos ainda estão")} sem a mensagem de hoje.</strong></p>${podeGerar ? `<button class="btn btn-primary" data-act="gerar-lote">Gerar mensagens de hoje</button>` : ""}</div>`;
+  } else {
+    const comPendHoje = Object.values(alunos).filter(a => ativo(a) && comPend(a)).length;
+    el.innerHTML = comPendHoje ? `<div class="notice ok"><p>Todas as mensagens de hoje estão prontas.</p></div>` : "";
+  }
+}
+function renderCards(){
+  const lista = Object.values(alunos);
+  const at = lista.filter(ativo);
+  const f = ui.f;
+  const cards = [
+    {id:"acompanhamento", lbl:"Em acompanhamento", n:at.length, cls:"", sel: f.mostrar==="ativos" && !f.situacao && !f.msg},
+    {id:"contrato", lbl:"Não assinou contrato", n:at.filter(a => abertas(a).some(p => p.k==="contrato")).length, cls:"", sel:f.mostrar==="ativos" && f.situacao==="contrato"},
+    {id:"documentacao", lbl:"Sem documentação", n:at.filter(a => abertas(a).some(p => p.k==="documentacao")).length, cls:"", sel:f.mostrar==="ativos" && f.situacao==="documentacao"},
+    {id:"acesso", lbl:"Nunca acessou", n:at.filter(a => abertas(a).some(p => p.k==="acesso")).length, cls:"", sel:f.mostrar==="ativos" && f.situacao==="acesso"},
+    {id:"vencendo", lbl:"Vencendo ou vencido", n:lista.filter(vencendo).length, cls:"warn", sel:f.mostrar==="ativos" && f.situacao==="vencendo"},
+    {id:"pendentes", lbl:"Mensagens pendentes hoje", n:lista.filter(pendenteHoje).length, cls:"info", sel:f.mostrar==="ativos" && f.msg==="pendentes"},
+    {id:"resolvidas", lbl:"Pendências resolvidas", n:lista.filter(concluido).length, cls:"ok", sel:f.mostrar==="resolvidas"}
+  ];
+  $("#p-cards").innerHTML = cards.map(c => `<button class="stat ${c.cls} ${c.sel ? "sel" : ""}" data-act="card" data-card="${c.id}" aria-pressed="${c.sel}"><span class="lbl">${c.lbl}</span><span class="val">${c.n}</span></button>`).join("");
+}
+function noEscopo(a){ return ui.f.mostrar === "resolvidas" ? concluido(a) : ativo(a); }
+function renderPosFiltro(){
+  const esc0 = Object.values(alunos).filter(noEscopo);
+  const btns = [`<button class="chipbtn ${!ui.f.pos ? "sel" : ""}" data-act="pos" data-pos="">Todas as pós <span class="c">${esc0.length}</span></button>`]
+    .concat(POS.map(p => `<button class="chipbtn ${ui.f.pos===p.nome ? "sel" : ""}" data-act="pos" data-pos="${esc(p.nome)}">${esc(p.curto)} <span class="c">${esc0.filter(a => a.pos===p.nome).length}</span></button>`));
+  $("#p-pos").innerHTML = btns.join("");
+}
+function statusMsg(a){
+  if(concluido(a)) return `<span class="tag resolvido">Concluído</span>`;
+  if(gerando[a.id]) return `<span class="tag pronta">Escrevendo…</span>`;
+  const m = msgHoje(a);
+  if(m) return m.enviada ? `<span class="tag enviada">Enviada</span>` : `<span class="tag pronta">Pronta para enviar</span>`;
+  if(!comPend(a)) return `<span class="tag">Sem pendência</span>`;
+  return diaUtil() ? `<span class="tag">A gerar</span>` : `<span class="tag">Sem envio hoje</span>`;
+}
+function filtrar(){
+  const f = ui.f, q = f.busca.trim().toLowerCase(), qd = q.replace(/\D/g,"");
+  return Object.values(alunos).filter(a => {
+    if(!noEscopo(a)) return false;
+    if(f.pos && a.pos !== f.pos) return false;
+    if(q){
+      const hit = [a.nome, a.email, a.telefone].some(v => (v||"").toLowerCase().includes(q)) || (qd.length >= 3 && (a.telefone||"").replace(/\D/g,"").includes(qd));
+      if(!hit) return false;
+    }
+    if(f.situacao === "vencendo"){ if(!vencendo(a)) return false; }
+    else if(f.situacao){ if(!abertas(a).some(p => p.k === f.situacao)) return false; }
+    if(f.msg){
+      const m = msgHoje(a);
+      if(f.msg === "pronta" && !(m && !m.enviada)) return false;
+      if(f.msg === "enviada" && !(m && m.enviada)) return false;
+      if(f.msg === "gerar" && !(!m && comPend(a))) return false;
+      if(f.msg === "pendentes" && !pendenteHoje(a)) return false;
+    }
+    return true;
+  }).sort((x,y) => diasAberto(y) - diasAberto(x) || (x.nome||"").localeCompare(y.nome||"", "pt-BR"));
+}
+function renderTabela(){
+  const el = $("#p-table"); if(!el) return;
+  if(Object.keys(alunos).length === 0){
+    el.innerHTML = `<div class="empty"><h2>Nenhum aluno cadastrado ainda</h2><p class="muted">Cadastre o primeiro aluno com pendência e o agente escreve a mensagem de acompanhamento.</p><button class="btn btn-primary" data-act="novo">Cadastrar aluno</button></div>`;
+    return;
+  }
+  const lista = filtrar();
+  if(!lista.length){ el.innerHTML = `<div class="empty"><p class="muted">Nenhum aluno com esses filtros.</p><button class="btn" data-act="limpar-filtros">Limpar filtros</button></div>`; return; }
+  const P = prazo();
+  el.innerHTML = `<table><thead><tr><th>Aluno</th><th>Pendências</th><th>Pós</th><th>Perfil</th><th>Dias em aberto</th><th>Tom de hoje</th><th>Mensagem</th></tr></thead><tbody>${
+    lista.map(a => {
+      const D = diasAberto(a), m = msgHoje(a);
+      const tom = concluido(a) ? "" : (ui.tomSel[a.id] && gerando[a.id] ? ui.tomSel[a.id] : (m ? m.tom : (comPend(a) ? tomSugerido(a) : "")));
+      const pendTags = concluido(a) ? `<span class="tag resolvido">Todas resolvidas</span>` : (abertas(a).map(p => `<span class="tag">${esc(p.curto)}</span>`).join("") || `<span class="muted small">Nenhuma marcada</span>`);
+      const ultResp = (a.respostas||[]).slice(-1)[0];
+      return `<tr tabindex="0" data-act="abrir" data-id="${esc(a.id)}">
+        <td><div class="nome">${esc(a.nome || "Sem nome")}</div><div class="muted small num">${esc(a.telefone || a.email || "")}</div></td>
+        <td><div class="tags">${pendTags}</div></td>
+        <td class="small">${esc(posInfo(a.pos)?.curto || "—")}</td>
+        <td class="small">${esc(perfilTxt(a.perfil) || "—")}</td>
+        <td><span class="dias ${!concluido(a) && D > P ? "vencido" : ""}">${concluido(a) ? "—" : plural(D, "dia", "dias")}</span></td>
+        <td>${tom ? `<span class="tag ${tom.toLowerCase()}">${tom}</span>` : `<span class="muted">—</span>`}</td>
+        <td><div class="tags">${statusMsg(a)}</div>${ultResp ? `<div class="small muted" style="margin-top:4px">Respondeu em ${fmtDM(ultResp.data)}</div>` : ""}</td>
+      </tr>`;
+    }).join("")
+  }</tbody></table>`;
+}
+
+/* ---------- Cadastro / edição ---------- */
+function renderForm(){
+  const a = ui.editId ? alunos[ui.editId] : null;
+  const ed = !!a;
+  const pendRow = p => {
+    const pp = a?.pendencias?.[p.k];
+    const res = pp?.ativa && pp.resolvidaEm;
+    return `<div class="pend-row">
+      <label class="chk"><input type="checkbox" id="p-${p.k}" ${pp?.ativa ? "checked" : ""}> ${esc(p.label)}${res ? ` <span class="tag resolvido">Resolvida em ${fmtBR(pp.resolvidaEm)}</span>` : ""}</label>
+      <label class="dias-in" for="d-${p.k}">Pendente há <input type="number" id="d-${p.k}" min="0" inputmode="numeric" value="${pp?.ativa && pp.diasInformados != null ? pp.diasInformados : ""}"> dias</label>
+    </div>`;
+  };
+  $("#app").innerHTML = `
+  <div class="topbar"><button class="btn btn-ghost" data-act="${ed ? "voltar-aluno" : "voltar"}">← ${ed ? "Voltar ao aluno" : "Voltar ao painel"}</button></div>
+  <header class="titles" style="display:flex;flex-direction:column;gap:4px"><h1>${ed ? "Editar aluno" : "Cadastrar aluno"}</h1><p class="sub">Nenhum campo é obrigatório. O agente escreve com as informações que existirem.</p></header>
+  <div class="two-col">
+    <form id="f-aluno" class="col-main" novalidate>
+      <section class="card"><h2>Dados do aluno</h2>
+        <div class="grid2">
+          <div class="field"><label for="i-nome">Nome</label><input type="text" id="i-nome" autocomplete="off" value="${esc(a?.nome)}"></div>
+          <div class="field"><label for="i-email">E-mail</label><input type="email" id="i-email" autocomplete="off" value="${esc(a?.email)}"></div>
+          <div class="field"><label for="i-tel">Telefone (WhatsApp)</label><input type="tel" id="i-tel" autocomplete="off" value="${esc(a?.telefone)}"></div>
+          <div class="field"><label for="i-data">Data da compra</label><input type="date" id="i-data" max="${hoje()}" value="${esc(a?.dataCompra)}"></div>
+        </div>
+      </section>
+      <section class="card"><h2>Pendências</h2>
+        <div>${PEND.map(pendRow).join("")}</div>
+        <p class="hint">Em branco: contamos a partir da data da compra, ou de hoje se ela também não for informada.</p>
+      </section>
+      <section class="card"><h2>Perguntas do agente</h2>
+        <div class="field"><span>1. Ele está em transição ou em especialização de carreira?</span>
+          <div class="seg" role="radiogroup">
+            <label><input type="radio" name="perfil" id="r-trans" value="transicao" ${a?.perfil==="transicao" ? "checked" : ""}> Transição de carreira</label>
+            <label><input type="radio" name="perfil" id="r-esp" value="especializacao" ${a?.perfil==="especializacao" ? "checked" : ""}> Especialização</label>
+            <label><input type="radio" name="perfil" id="r-ns" value="" ${!a?.perfil ? "checked" : ""}> Não sei</label>
+          </div></div>
+        <div class="field"><label for="i-dor">2. Qual é a dor principal dele?</label>
+          <textarea id="i-dor" rows="3" placeholder="Ex.: melhor remuneração, mais tempo com a família, entrar no mercado de dados para ter flexibilidade">${esc(a?.dor)}</textarea></div>
+        <div class="field"><label for="i-pos">3. Qual pós-graduação ele cursa?</label>
+          <select id="i-pos"><option value="">Não sei</option>${POS.map(p => `<option value="${esc(p.nome)}" ${a?.pos===p.nome ? "selected" : ""}>${esc(p.nome)}</option>`).join("")}</select></div>
+      </section>
+      <section class="card"><h2>Observações</h2>
+        <div class="field"><label for="i-obs">O agente considera estas observações em todas as mensagens</label>
+          <textarea id="i-obs" rows="3" placeholder="Ex.: ao subir a documentação ele ganha acesso ao curso bônus X">${esc(a?.observacoes)}</textarea></div>
+      </section>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">${ed ? "Salvar alterações" : "Salvar e gerar 1ª mensagem"}</button>
+        <button type="button" class="btn" data-act="${ed ? "voltar-aluno" : "voltar"}">Cancelar</button>
+      </div>
+    </form>
+    <aside class="col-side"><section class="card sticky resumo" id="resumo"></section></aside>
+  </div>`;
+  const f = $("#f-aluno");
+  f.addEventListener("input", atualizarResumo);
+  f.addEventListener("change", atualizarResumo);
+  f.addEventListener("submit", e => { e.preventDefault(); salvarForm(); });
+  PEND.forEach(p => $("#d-"+p.k).addEventListener("input", () => { if($("#d-"+p.k).value !== "") $("#p-"+p.k).checked = true; }));
+  atualizarResumo();
+}
+function lerForm(){
+  const base = ui.editId ? clone(alunos[ui.editId]) : {mensagens:[], respostas:[], criadoEm:hoje()};
+  const pend = {};
+  PEND.forEach(p => {
+    const marcado = $("#p-"+p.k).checked;
+    const v = $("#d-"+p.k).value.trim();
+    const prev = base.pendencias?.[p.k];
+    if(!marcado){ pend[p.k] = {ativa:false}; return; }
+    const dias = v === "" ? null : Math.max(0, Math.round(Number(v)) || 0);
+    const igual = prev?.ativa && prev.diasInformados === dias;
+    pend[p.k] = {ativa:true, diasInformados:dias, informadoEm: igual && prev.informadoEm ? prev.informadoEm : hoje(), resolvidaEm: prev?.ativa ? (prev.resolvidaEm || null) : null};
+  });
+  return {...base,
+    nome:$("#i-nome").value.trim(), email:$("#i-email").value.trim(), telefone:$("#i-tel").value.trim(),
+    dataCompra:$("#i-data").value || "", perfil:(document.querySelector('input[name="perfil"]:checked')||{}).value || "",
+    dor:$("#i-dor").value.trim(), pos:$("#i-pos").value, observacoes:$("#i-obs").value.trim(), pendencias:pend};
+}
+function atualizarResumo(){
+  const el = $("#resumo"); if(!el) return;
+  const a = lerForm();
+  const D = diasAberto(a), P = prazo(), tem = comPend(a);
+  const sit = situacaoPrazo(a);
+  const tom = tomSugerido(a);
+  el.innerHTML = `<h2>Resumo</h2>
+    <dl class="kv">
+      <div><dt>Dias em aberto</dt><dd class="num">${tem ? plural(D, "dia", "dias") + (sit.cls ? ` <span class="tag ${sit.cls}">${sit.txt}</span>` : "") : "Nenhuma pendência marcada"}</dd></div>
+      <div><dt>Prazo combinado</dt><dd class="num">${plural(P, "dia", "dias")}</dd></div>
+      <div><dt>Tom sugerido</dt><dd><span class="tag ${tom.toLowerCase()}">${tom}</span></dd></div>
+      ${tem ? `<div><dt>Pendências</dt><dd class="small">${abertas(a).map(p => esc(p.curto) + " · " + diasPend(a,p.k) + " d").join("<br>")}</dd></div>` : ""}
+    </dl>`;
+}
+async function salvarForm(){
+  const a = lerForm();
+  if(ui.editId){
+    await Store.salvarAluno(a);
+    toast("Dados salvos.");
+    irPara("aluno", {alunoId:a.id, editId:null});
+    return;
+  }
+  a.id = Store.novoId();
+  Store.salvarAluno(a);
+  irPara("aluno", {alunoId:a.id, editId:null});
+  if(sampleFn && !samplingOff) gerar(a.id, {tom:tomSugerido(a)});
+  else toast("Aluno salvo. A mensagem não pôde ser gerada nesta visualização.");
+}
+
+/* ---------- Acompanhamento do aluno ---------- */
+function renderAluno(){
+  const a = alunos[ui.alunoId];
+  $("#app").innerHTML = `
+  <div class="topbar"><button class="btn btn-ghost" data-act="voltar">← Voltar ao painel</button></div>
+  <header class="aluno-head" id="a-head"></header>
+  <div class="two-col">
+    <div class="col-main">
+      <section class="card card-main" id="a-main">
+        <div id="a-top"></div>
+        <details class="instr" id="a-instr-wrap"><summary>O que mudar na mensagem (opcional)</summary>
+          <label for="a-instr" class="hint">O agente segue esta instrução com prioridade ao gerar a nova mensagem.</label>
+          <textarea id="a-instr" rows="2" placeholder="Ex.: mencionar que a turma começa na segunda; deixar mais curta"></textarea></details>
+        <div id="a-msgbox" class="msgbox" aria-live="polite"></div>
+        <div id="a-actions" class="actions"></div>
+      </section>
+      <section class="card"><h2>O aluno respondeu?</h2>
+        <div class="field"><label for="a-resp">Cole aqui a resposta dele. O agente usa na próxima mensagem.</label><textarea id="a-resp" rows="3"></textarea></div>
+        <div class="actions"><button class="btn" data-act="salvar-resp">Salvar resposta</button></div>
+        <ul class="list" id="a-resp-list"></ul>
+      </section>
+      <section class="card"><h2>Histórico de mensagens</h2><div class="hist" id="a-hist"></div></section>
+    </div>
+    <aside class="col-side">
+      <section class="card"><h3>Pendências</h3><div class="side-pend" id="a-pend"></div></section>
+      <section class="card"><h3>Perfil do aluno</h3><dl class="kv" id="a-perfil"></dl></section>
+      <section class="card"><h3>Observações</h3>
+        <textarea id="a-obs" rows="4" aria-label="Observações">${esc(a.observacoes)}</textarea>
+        <button class="btn" data-act="salvar-obs">Salvar observações</button></section>
+      <button class="btn btn-danger" id="a-excluir" data-act="excluir">Excluir aluno</button>
+    </aside>
+  </div>`;
+  renderAlunoPartes();
+}
+function renderAlunoPartes(){
+  const a = alunos[ui.alunoId]; if(!a || !$("#a-head")) return;
+  const D = diasAberto(a), sit = situacaoPrazo(a), con = concluido(a), tem = comPend(a);
+  const prazoTag = con ? `<span class="tag resolvido">Pendências resolvidas</span>`
+    : tem ? `<span class="tag ${sit.cls}">${plural(D, "dia", "dias")} em aberto · ${sit.txt}</span>`
+    : `<span class="tag">Nenhuma pendência marcada</span>`;
+  $("#a-head").innerHTML = `<div class="info">
+      <h1>${esc(a.nome || "Aluno sem nome")}</h1>
+      <div class="meta">${a.email ? `<span>${esc(a.email)}</span>` : ""}${a.telefone ? `<span class="num">${esc(a.telefone)}</span>` : ""}${a.dataCompra ? `<span>Compra em ${fmtBR(a.dataCompra)}</span>` : ""}${!a.email && !a.telefone && !a.dataCompra ? `<span>Sem contato cadastrado</span>` : ""}</div>
+      <div>${prazoTag}</div>
+    </div>
+    <button class="btn" data-act="editar">Editar dados</button>`;
+
+  // Cartão principal
+  const m = msgHoje(a), g = gerando[a.id];
+  const sug = tomSugerido(a);
+  const sel = ui.tomSel[a.id] || (m ? m.tom : sug);
+  ui.tomSel[a.id] = sel;
+  const nDia = m ? m.dia : (msgs(a).filter(x => x.data !== hoje()).reduce((mx,x) => Math.max(mx, x.dia||0), 0) + 1);
+  const podeGerar = sampleFn && !samplingOff;
+  $("#a-instr-wrap").hidden = con;
+  $("#a-msgbox").hidden = con;
+  $("#a-actions").hidden = con;
+  if(con){
+    $("#a-top").innerHTML = `<div class="done-box"><h2>Acompanhamento concluído</h2><p class="muted">Todas as pendências deste aluno foram resolvidas e ele não recebe mais mensagens. Se precisar, desmarque uma pendência ao lado para voltar ao acompanhamento.</p></div>`;
+  } else {
+    $("#a-top").innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
+      <div class="main-head"><h2>Mensagem de hoje · dia ${nDia}</h2><span class="small muted">Sugerido pelo agente: <strong>${sug}</strong></span></div>
+      <div class="tones" role="group" aria-label="Tom da mensagem">${TONS.map(t => `<button class="tone ${t.toLowerCase()} ${sel===t ? "sel" : ""}" data-act="tom" data-tom="${t}" aria-pressed="${sel===t}" ${g ? "disabled" : ""}>${t}</button>`).join("")}</div>
+      ${!podeGerar ? `<p class="small" style="color:var(--bad)">${sampleFn === null ? "A escrita de mensagens não está disponível nesta visualização. Abra o painel pelo Claude." : sampleFn === undefined ? "Conectando ao agente…" : esc(samplingOff)}</p>` : ""}
+      ${!tem ? `<p class="small muted">Este aluno não tem pendência marcada. Use “Editar dados” para marcar o que falta.</p>` : ""}
+    </div>`;
+    const box = $("#a-msgbox");
+    if(g){ box.className = "msgbox writing"; box.textContent = g.text || "Escrevendo a mensagem…"; }
+    else if(m){ box.className = "msgbox"; box.textContent = m.texto; }
+    else { box.className = "msgbox placeholder"; box.textContent = diaUtil() ? "A mensagem de hoje ainda não foi gerada." : "Hoje não é dia útil. Você pode gerar uma mensagem manualmente, se precisar."; }
+    $("#a-actions").innerHTML = `
+      <button class="btn" data-act="copiar" ${!m || g ? "disabled" : ""}>Copiar mensagem</button>
+      ${g ? `<button class="btn" data-act="parar">Parar</button>` : `<button class="btn btn-primary" data-act="gerar" ${!podeGerar ? "disabled" : ""}>${m ? "Gerar nova mensagem" : "Gerar mensagem de hoje"}</button>`}
+      ${m && !g ? (m.enviada ? `<button class="btn btn-ok" data-act="enviada">Enviada ✓ (desfazer)</button>` : `<button class="btn" data-act="enviada">Marcar como enviada</button>`) : ""}`;
+  }
+
+  // Respostas
+  const resps = (a.respostas || []).slice().reverse();
+  $("#a-resp-list").innerHTML = resps.length ? resps.map(r => `<li><div class="when">Respondeu em ${fmtBR(r.data)}</div><div class="txt">${esc(r.texto)}</div></li>`).join("") : `<li class="muted small" style="background:none;border:0;padding:0">Nenhuma resposta registrada.</li>`;
+
+  // Histórico
+  const hist = msgs(a).slice().reverse();
+  $("#a-hist").innerHTML = hist.length ? hist.map(h => `<details>
+      <summary><span class="small num">${fmtBR(h.data)}</span><span class="small muted">Dia ${h.dia}</span><span class="tag ${h.tom.toLowerCase()}">${h.tom}</span>${h.enviada ? `<span class="tag enviada">Enviada</span>` : `<span class="tag">Não enviada</span>`}</summary>
+      <div class="body">${h.instrucao ? `<p class="small muted">Instrução usada: ${esc(h.instrucao)}</p>` : ""}<div class="txt">${esc(h.texto)}</div></div>
+    </details>`).join("") : `<p class="muted small">Nenhuma mensagem gerada ainda.</p>`;
+
+  // Pendências
+  const mk = marcadas(a), P = prazo();
+  $("#a-pend").innerHTML = mk.length ? mk.map(p => {
+    const pp = a.pendencias[p.k], d = diasPend(a, p.k), res = !!pp.resolvidaEm;
+    return `<div class="item"><label class="chk"><input type="checkbox" data-act="resolver" data-k="${p.k}" ${res ? "checked" : ""}> ${esc(p.label)}</label>
+      <div class="det ${res ? "ok" : d > P ? "vencido" : ""}">${res ? "Resolvida em " + fmtBR(pp.resolvidaEm) : "Pendente há " + plural(d, "dia", "dias")}</div></div>`;
+  }).join("") + `<p class="hint">Marque quando o aluno resolver.</p>` : `<p class="muted small">Nenhuma pendência marcada. Use “Editar dados” para marcar.</p>`;
+
+  // Perfil
+  $("#a-perfil").innerHTML = `
+    <div><dt>Pós-graduação</dt><dd>${esc(a.pos || "Não informada")}</dd></div>
+    <div><dt>Momento de carreira</dt><dd>${esc(perfilTxt(a.perfil) || "Não informado")}</dd></div>
+    <div><dt>Dor principal</dt><dd>${esc(a.dor || "Não informada")}</dd></div>`;
+}
+function atualizarStreaming(id){
+  if(ui.tela === "aluno" && ui.alunoId === id){
+    const box = $("#a-msgbox"); if(box && gerando[id]){ box.className = "msgbox writing"; box.textContent = gerando[id].text; }
+  }
+}
+
+/* ---------- Configurações ---------- */
+function renderConfig(){
+  $("#app").innerHTML = `
+  <div class="topbar"><button class="btn btn-ghost" data-act="voltar">← Voltar ao painel</button></div>
+  <header style="display:flex;flex-direction:column;gap:4px"><h1>Configurações</h1><p class="sub">Valem para todas as mensagens do painel.</p></header>
+  <form id="f-cfg" class="col-main" style="max-width:760px" novalidate>
+    <section class="card"><h2>Mensagens</h2>
+      <div class="grid2">
+        <div class="field"><label for="c-ass">Quem assina as mensagens</label><input type="text" id="c-ass" placeholder="Ex.: Ana" value="${esc(cfg.assinante)}"><span class="hint">Nome usado no primeiro contato.</span></div>
+        <div class="field"><label for="c-prazo">Prazo para resolver as pendências (dias)</label><input type="number" id="c-prazo" min="1" inputmode="numeric" value="${esc(cfg.prazo)}"></div>
+      </div>
+    </section>
+    <section class="card"><h2>Links do passo a passo</h2>
+      <p class="hint">Sem link, o agente diz ao aluno que vai enviar o passo a passo em seguida.</p>
+      <div class="field"><label for="c-l1">Acessar a plataforma</label><input type="url" id="c-l1" placeholder="https://" value="${esc(cfg.linkAcesso)}"></div>
+      <div class="field"><label for="c-l2">Assinar o contrato</label><input type="url" id="c-l2" placeholder="https://" value="${esc(cfg.linkContrato)}"></div>
+      <div class="field"><label for="c-l3">Subir a documentação</label><input type="url" id="c-l3" placeholder="https://" value="${esc(cfg.linkDocumentacao)}"></div>
+    </section>
+    <div class="actions"><button type="submit" class="btn btn-primary">Salvar configurações</button><button type="button" class="btn" data-act="voltar">Cancelar</button></div>
+    ${Store.modo === "local" ? `<section class="card"><h2>Backup</h2>
+      <p class="hint">Os dados deste painel ficam só neste navegador. Exporte um backup para guardar ou levar para outro computador.</p>
+      <div class="actions"><button type="button" class="btn" data-act="exportar">Exportar backup</button>
+      <label class="btn" for="c-imp">Importar backup</label><input type="file" id="c-imp" accept="application/json,.json" hidden></div></section>`
+    : `<p class="hint">Os dados ficam salvos com o painel e aparecem iguais em qualquer computador em que você abrir este link.</p>`}
+  </form>`;
+  $("#f-cfg").addEventListener("submit", async e => {
+    e.preventDefault();
+    const c = {assinante:$("#c-ass").value.trim(), prazo:Math.max(1, Math.round(Number($("#c-prazo").value)) || 7),
+      linkAcesso:$("#c-l1").value.trim(), linkContrato:$("#c-l2").value.trim(), linkDocumentacao:$("#c-l3").value.trim()};
+    await Store.salvarCfg(c);
+    toast("Configurações salvas.");
+    irPara("painel");
+  });
+  const imp = $("#c-imp");
+  if(imp) imp.addEventListener("change", async () => {
+    const file = imp.files[0]; if(!file) return;
+    try {
+      const d = JSON.parse(await file.text());
+      if(!d || typeof d.alunos !== "object") throw 0;
+      alunos = d.alunos; cfg = {...CFG_PADRAO, ...(d.cfg||{})};
+      Store.persistLocal(); toast("Backup importado.");
+      irPara("painel");
+    } catch { toast("Este arquivo não é um backup do painel."); }
+    imp.value = "";
+  });
+}
+
+/* ---------- Ações ---------- */
+let armTimer = null;
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-act]"); if(!t) return;
+  const act = t.dataset.act;
+  const a = alunos[ui.alunoId];
+  switch(act){
+    case "novo": irPara("form", {editId:null}); break;
+    case "config": irPara("config"); break;
+    case "voltar": irPara("painel"); break;
+    case "voltar-aluno": irPara("aluno", {editId:null}); break;
+    case "abrir": irPara("aluno", {alunoId:t.dataset.id}); break;
+    case "editar": irPara("form", {editId:ui.alunoId}); break;
+    case "gerar-lote": gerarLote(); break;
+    case "limpar-filtros": ui.f = {busca:"", situacao:"", msg:"", mostrar:"ativos", pos:""}; irPara("painel"); break;
+    case "pos": ui.f.pos = t.dataset.pos; renderPainelPartes(); break;
+    case "card": {
+      const c = t.dataset.card, f = ui.f;
+      f.situacao = ""; f.msg = ""; f.mostrar = "ativos";
+      if(["acesso","contrato","documentacao","vencendo"].includes(c)) f.situacao = c;
+      if(c === "pendentes") f.msg = "pendentes";
+      if(c === "resolvidas") f.mostrar = "resolvidas";
+      renderPainelPartes(); break;
+    }
+    case "tom": ui.tomSel[ui.alunoId] = t.dataset.tom; renderAlunoPartes(); break;
+    case "gerar": {
+      if(!a) break;
+      const instr = $("#a-instr").value.trim();
+      $("#a-instr").value = ""; $("#a-instr-wrap").open = false;
+      gerar(a.id, {tom:ui.tomSel[a.id] || tomSugerido(a), instrucao:instr});
+      break;
+    }
+    case "parar": gerando[ui.alunoId]?.ctl.abort(); break;
+    case "copiar": {
+      const m = a && msgHoje(a); if(!m) break;
+      try { await navigator.clipboard.writeText(m.texto); toast("Mensagem copiada."); }
+      catch { const r = document.createRange(); r.selectNodeContents($("#a-msgbox")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Texto selecionado. Use Ctrl+C para copiar."); }
+      break;
+    }
+    case "enviada": {
+      if(!a) break;
+      const lista = clone(msgs(a)); const i = lista.findIndex(m => m.data === hoje()); if(i < 0) break;
+      lista[i].enviada = !lista[i].enviada; lista[i].enviadaEm = lista[i].enviada ? new Date().toISOString() : null;
+      Store.salvarAluno({...a, mensagens:lista}); break;
+    }
+    case "salvar-resp": {
+      if(!a) break;
+      const txt = $("#a-resp").value.trim(); if(!txt){ toast("Cole a resposta do aluno antes de salvar."); break; }
+      Store.salvarAluno({...a, respostas:[...clone(a.respostas||[]), {data:hoje(), texto:txt}]});
+      $("#a-resp").value = ""; toast("Resposta salva. O agente vai considerar na próxima mensagem."); break;
+    }
+    case "salvar-obs": {
+      if(!a) break;
+      Store.salvarAluno({...a, observacoes:$("#a-obs").value.trim()}); toast("Observações salvas."); break;
+    }
+    case "resolver": {
+      if(!a) break;
+      const k = t.dataset.k, pend = clone(a.pendencias);
+      pend[k].resolvidaEm = t.checked ? hoje() : null;
+      const novo = {...a, pendencias:pend};
+      Store.salvarAluno(novo);
+      if(concluido(novo)) toast("Todas as pendências resolvidas. Acompanhamento concluído.");
+      break;
+    }
+    case "excluir": {
+      if(!a) break;
+      if(!t.classList.contains("armed")){
+        t.classList.add("armed"); t.textContent = "Clique de novo para excluir";
+        clearTimeout(armTimer); armTimer = setTimeout(() => { t.classList.remove("armed"); t.textContent = "Excluir aluno"; }, 4000);
+      } else {
+        clearTimeout(armTimer); gerando[a.id]?.ctl.abort();
+        await Store.excluirAluno(a.id); toast("Aluno excluído."); irPara("painel");
+      }
+      break;
+    }
+    case "exportar": {
+      const data = JSON.stringify({exportadoEm:new Date().toISOString(), alunos, cfg}, null, 2);
+      if(!downloadsNs){ toast("O download não está disponível nesta visualização."); break; }
+      try { await downloadsNs.save({filename:"painel-follow-up-backup-" + hoje() + ".json", data}); }
+      catch(err){ if(err?.code !== "declined") toast("Não foi possível baixar o backup aqui."); }
+      break;
+    }
+  }
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Enter"){ const tr = e.target.closest?.("tr[data-act='abrir']"); if(tr){ e.preventDefault(); tr.click(); } }
+});
+
+/* ---------- Início ---------- */
+(async () => {
+  const use = n => window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+  use("sample").then(fn => { sampleFn = fn || null; atualizarTela(); checarAuto(); });
+  use("downloads").then(d => { downloadsNs = d; });
+  await Store.init();
+  setInterval(() => { checarAuto(); if(ui.tela === "painel") renderBanner(); }, 60000);
+})();
+})();
+</script>
+
+</body>
+</html>
